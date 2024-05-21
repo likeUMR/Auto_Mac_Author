@@ -1,4 +1,6 @@
 {
     "openai_api_key": "======",
-    "openai_base_url": "https://api.deepseek.com"
+    "openai_base_url": "https://api.deepseek.com",
+    "ttl_username": "======",
+    "ttl_password": "======"
 }
