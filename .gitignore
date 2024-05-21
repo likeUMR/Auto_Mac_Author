@@ -1,0 +1,7 @@
+# 忽略配置文件
+config.json
+cookies.json
+last_attempt.txt
+# 忽略成品内容
+Projects/
+test_function/
