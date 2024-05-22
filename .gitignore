@@ -5,3 +5,4 @@ last_attempt.txt
 # 忽略成品内容
 Projects/
 test_function/
+__pycache__/

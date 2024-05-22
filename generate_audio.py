@@ -2,6 +2,8 @@ import requests
 import os
 import json
 import time
+from pathlib import Path
+import re
 
 def load_config():
     script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -48,36 +50,33 @@ def get_last_attempt_time(path):
     except FileNotFoundError:
         return None
 
-def generate_audio(project_name,id=0):
+def generate_audio(project_name):
     config = load_config()
     script_dir = os.path.dirname(os.path.abspath(__file__))
     project_dir = os.path.join(script_dir, 'Projects', project_name)
-    transcript_path = os.path.join(project_dir, 'transcript.txt')
-    output_folder = os.path.join(project_dir)
-    cookies_path = os.path.join(script_dir, 'cookies.json')
-    last_attempt_path = os.path.join(script_dir, 'last_attempt.txt')
+    transcript_dir = os.path.join(project_dir, 'transcript')
+    voice_dir = os.path.join(project_dir, 'voice')
 
-    if not os.path.exists(output_folder):
-        os.makedirs(output_folder)
+    if not os.path.exists(voice_dir):
+        os.makedirs(voice_dir)
 
-    if not os.path.exists(transcript_path):
-        print("Transcript file does not exist.")
+    transcript_files = [f for f in os.listdir(transcript_dir) if f.endswith('.txt')]
+    if not transcript_files:
+        print("No transcript files found.")
         return
 
-    with open(transcript_path, 'r', encoding='utf-8') as file:
-        text = file.read()
-
-    cookies = load_cookies(cookies_path)
+    cookies = load_cookies(os.path.join(script_dir, 'cookies.json'))
+    last_attempt_path = os.path.join(script_dir, 'last_attempt.txt')
     last_attempt_time = get_last_attempt_time(last_attempt_path)
     current_time = time.time()
 
-    if not cookies :
+    if not cookies:
         if last_attempt_time and current_time - last_attempt_time < 3600:
             print("Recently failed login attempt, try again later.")
             return
         cookies = login_and_get_cookies(config['ttl_username'], config['ttl_password'])
         if cookies:
-            save_cookies(cookies, cookies_path)
+            save_cookies(cookies, os.path.join(script_dir, 'cookies.json'))
             save_last_attempt_time(last_attempt_path)
         else:
             print("Failed to login and get cookies.")
@@ -96,40 +95,48 @@ def generate_audio(project_name,id=0):
     }
 
     url = "http://new.text-to-speech.cn/wp-content/plugins/speech-tts/getSpeek.php"
-    data = {
-        'language': '中文（普通话，简体）',
-        'voice': 'zh-CN-YunzeNeural',
-        'text': text,
-        'role': '0',
-        'style': '0',
-        'styledegree': '1',
-        'volume': '75',
-        'predict': '0',
-        'rate': '0',
-        'pitch': '0',
-        'kbitrate': 'audio-48khz-192kbitrate-mono-mp3',
-        'silence': '',
-        'replice': '1',
-    }
 
-    response = requests.post(url, data=data, headers=headers)
-    if response.status_code == 200:
-        response_data = response.json()
-        if response_data['code'] == 200:
-            print("语音生成成功，开始下载...")
-            download_url = response_data['download']
-            download_file(download_url, output_folder, id=id)
+    for transcript_file in transcript_files:
+        transcript_path = os.path.join(transcript_dir, transcript_file)
+        with open(transcript_path, 'r', encoding='utf-8') as file:
+            text = file.read()
+
+        data = {
+            'language': '中文（普通话，简体）',
+            'voice': 'zh-CN-YunzeNeural',
+            'text': text,
+            'role': '0',
+            'style': '0',
+            'styledegree': '1',
+            'volume': '75',
+            'predict': '0',
+            'rate': '0',
+            'pitch': '0',
+            'kbitrate': 'audio-48khz-192kbitrate-mono-mp3',
+            'silence': '',
+            'replice': '1',
+        }
+
+        response = requests.post(url, data=data, headers=headers)
+        if response.status_code == 200:
+            response_data = response.json()
+            if response_data['code'] == 200:
+                print(f"语音生成成功，开始下载 {transcript_file}...")
+                download_url = response_data['download']
+                match = re.search(r'_(\d+)', Path(transcript_file).stem)
+                id_number = int(match.group(1)) if match else -1
+                download_file(download_url, voice_dir, id=id_number)
+            else:
+                print(f"语音生成失败：{response_data['msg']}")
+                if response_data['msg'] == 'Invalid session or cookies':
+                    os.remove(os.path.join(script_dir, 'cookies.json'))  # Remove old cookies file
+                    print("Trying to re-login and fetch new cookies...")
+                    generate_audio(project_name)  # Retry with new login
         else:
-            print("语音生成失败：", response_data['msg'])
-            if response_data['msg'] == 'Invalid session or cookies':
-                os.remove(cookies_path)  # Remove old cookies file
-                print("Trying to re-login and fetch new cookies...")
-                generate_audio(project_name)  # Retry with new login
-    else:
-        print("请求失败，状态码：", response.status_code)
+            print("请求失败，状态码：", response.status_code)
 
-def download_file(url, output_folder, id=0):
-    if id > 0:
+def download_file(url, output_folder, id=-1):
+    if id > -1:
         local_filename = f'voice_{id}.mp3'
     else:
         local_filename = 'voice.mp3'
