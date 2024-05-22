@@ -30,7 +30,7 @@ def merge_video_and_audio(video_path, audio_path, output_path):
 def add_subtitles(video_path, subtitles_path, output_path):
     style_options = (
         "Fontname=Microsoft YaHei,"
-        "Fontsize=36,"
+        "Fontsize=30,"
         "PrimaryColour=&H00ffffff,"  # 白色
         "OutlineColour=&H00000000,"  # 黑色
         "Outline=1,"

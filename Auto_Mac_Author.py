@@ -32,9 +32,11 @@ def main():
             content_lines = [
                 f"标题：{video['title']}",
                 f"主题: {video['tname']}",
+                f"UP主: {video['owner']}",
                 f"简介：{video['desc'] if len(video['desc']) >= 8 else ''}",
                 f"动态：{video['dynamic'] if len(video['dynamic']) >= 8 else ''}",
                 f"内容：{video['summary'] if video['summary'] != 'No summary available' else ''}"
+                f"热评：{video['hot_comment']['username']}：{video['hot_comment']['message']}"
             ]
             file.write("\n".join(content_lines))
 
@@ -47,7 +49,7 @@ def main():
 
         # 生成文案
         print(f"正在为项目 {project_name} 生成文案...")
-        generate_transcript(project_dir)
+        generate_transcript(project_dir,split=True)
 
         # 生成音频
         print(f"正在为项目 {project_name} 生成音频...")

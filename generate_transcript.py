@@ -13,7 +13,7 @@ def read_and_truncate(file_path, max_length=5000):
 
 def smart_split(text, desired_length=7):
     # 定义分割标点
-    punctuation = '，。？！,?!;；'
+    punctuation = '，。？！,?!;；:：'
     segments = []
     current_segment = ""
     i = 0  # 增加一个索引变量来追踪当前字符的位置

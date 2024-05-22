@@ -71,6 +71,55 @@ def fetch_bilibili_summary(bvid,up_mid,cid):
             return data['data']['model_result']['summary']
     return "No summary available"
 
+def fetch_bilibili_top_comment(oid):
+    """
+    Fetches the top comment from the Bilibili API for a given oid.
+
+    Args:
+    oid (int): The object ID for which to fetch the top comment.
+    next_page (int): The page number for pagination.
+
+    Returns:
+    dict: A dictionary containing the username and message of the top comment, or error information.
+    """
+    # 定义 URL 和查询参数
+    url = "https://api.bilibili.com/x/v2/reply/main"
+    params = {
+        "mode": 3,
+        "next": 0,
+        "oid": oid,
+        "plat": 1,
+        "type": 1,
+        "ps": 1,  # Assuming 'ps' is the page size or similar parameter
+    }
+
+    # 定义请求头
+    headers = {
+        "User-Agent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+    }
+
+    # 发送 GET 请求
+    response = requests.get(url, headers=headers, params=params)
+
+    # 检查响应状态码
+    if response.status_code == 200:
+        try:
+            # 解析 JSON 响应体
+            data = response.json()
+            
+            # 提取所需数据
+            top_comment = {
+                "username": data["data"]["top"]["upper"]["member"]["uname"],
+                "message": data["data"]["top"]["upper"]["content"]["message"]
+            }
+            return top_comment
+        except KeyError as e:
+            return {"error": f"Key error: {e}"}
+        except ValueError as e:
+            return {"error": f"Value error: {e}"}
+    else:
+        return {"error": f"Failed to retrieve data: HTTP status {response.status_code}"}
+
 def fetch_top_videos(item=3,start=0):
     url = "https://api.bilibili.com/x/web-interface/ranking/v2"
     params = {
@@ -98,7 +147,9 @@ def fetch_top_videos(item=3,start=0):
                     'desc': video['desc'],
                     'dynamic': video['dynamic'],
                     'summary': fetch_bilibili_summary(video['bvid'],video['owner']['mid'],video['cid']) , # 调用摘要函数
-                    'tname': video['tname']
+                    'tname': video['tname'],
+                    'owner': video['owner']['name'],
+                    'hot_comment':fetch_bilibili_top_comment(video['aid']), # 调用评论函数
                 }
                 simplified_data.append(video_info)
             return simplified_data
