@@ -117,6 +117,8 @@ def fetch_bilibili_top_comment(oid):
             return {"error": f"Key error: {e}"}
         except ValueError as e:
             return {"error": f"Value error: {e}"}
+        except TypeError as e:
+            return {"error": f"Type error: {e}"}
     else:
         return {"error": f"Failed to retrieve data: HTTP status {response.status_code}"}
 

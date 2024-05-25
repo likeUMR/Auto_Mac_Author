@@ -71,7 +71,7 @@ def load_and_combine_audio(voice_dir, transcript_dir):
     combined_voice = AudioSegment.empty()
     subtitles = []
     total_length = 0  # Track total length of all audio for subtitles timing
-
+    print(voice_files)
     for vf in voice_files:
         voice_path = os.path.join(voice_dir, vf)
         file_id = vf.split('_')[-1].split('.')[0]
@@ -79,7 +79,7 @@ def load_and_combine_audio(voice_dir, transcript_dir):
         voice = AudioSegment.from_file(voice_path, format='mp3')
         with open(transcript_path, 'r', encoding='utf-8') as file:
             transcript_text = file.read().strip()
-
+        print(f"Loaded voice file: {vf} with transcript: {transcript_text}")
         combined_voice += voice
         start_time = total_length
         end_time = total_length + len(voice)
@@ -129,15 +129,19 @@ def select_and_concatenate_clips(video_dir, audio_length):
 
 
 def generate_video(project_name='test', bgm_volume_change=-12):
+    print(f"Generating video for project: {project_name}")
+
     script_dir, project_dir = setup_directories(project_name)
     voice_dir = os.path.join(project_dir, 'voice')
     transcript_dir = os.path.join(project_dir, 'transcript')
     video_dir = os.path.join(script_dir, 'Resource_Video_Clips')
     background_music_path = os.path.join(script_dir, 'temple.m4a')
+    print(f"Directories setup complete for project: {project_name}")
 
     combined_voice, subtitles = load_and_combine_audio(voice_dir, transcript_dir)
     srt_path = os.path.join(project_dir, 'subtitles.srt')
     generate_srt_file(subtitles, srt_path)
+    print(f"Audio and subtitles loaded and combined for project: {project_name}")
 
     combined_audio = combine_audio(background_music_path, combined_voice, bgm_volume_change)
     temp_audio_path = os.path.join(script_dir, 'temp_combined_audio.mp3')
@@ -168,7 +172,7 @@ def generate_video(project_name='test', bgm_volume_change=-12):
 
 def main():
     # 从命令行参数获取项目名称，默认为'test'
-    project_name =  'test'
+    project_name =  '20240526_原神动画短'
     generate_video(project_name)
 
 if __name__ == "__main__":

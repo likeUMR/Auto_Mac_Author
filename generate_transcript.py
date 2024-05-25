@@ -101,6 +101,9 @@ def generate_transcript(project_name, split=False):
         with open(transcript_path, 'w', encoding='utf-8') as file:
             file.write(generated_text)
     else:
+        transcript_path = os.path.join(project_dir, 'transcript.txt')
+        with open(transcript_path, 'w', encoding='utf-8') as file:
+            file.write(generated_text)
         parts = smart_split(generated_text)
         for i, part in enumerate(parts):
             part_file_path = os.path.join(transcript_dir, f'transcript_{i}.txt')

@@ -11,7 +11,7 @@ def clean_title(title):
     clean_title = re.findall(r'[\u4e00-\u9fa5A-Za-z]', title)
     return ''.join(clean_title[:5])  # 返回前五个字符
 
-def main():
+def main(item=3,start=0):
     print("开始生成项目内容。")
     videos = fetch_top_videos(3)
 
@@ -62,4 +62,4 @@ def main():
         print(f"项目 {project_name} 的所有生成工作已完成。")
 
 if __name__ == "__main__":
-    main()
+    main(2,1)
