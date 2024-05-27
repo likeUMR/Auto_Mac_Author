@@ -3,6 +3,9 @@ from hashlib import md5
 import urllib.parse
 import time
 import requests
+import json
+import os
+import datetime
 
 mixinKeyEncTab = [
     46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49,
@@ -130,7 +133,7 @@ def fetch_bilibili_top_comment(oid):
     else:
         return {"error": f"Failed to retrieve data: HTTP status {response.status_code}"}
 
-def fetch_top_videos(item=3,start=0):
+def fetch_top_videos(item=3, remove_duplicates=False, char_threshold=85):
     url = "https://api.bilibili.com/x/web-interface/ranking/v2"
     params = {
         'rid': 0,
@@ -148,24 +151,76 @@ def fetch_top_videos(item=3,start=0):
     if response.status_code == 200:
         data = response.json()
         if data['code'] == 0:
-            top_videos = data['data']['list'][start:item+start]  # 获取前5个视频条目
+            all_videos = data['data']['list']
             simplified_data = []
-            for video in top_videos:
+            seen_bvids = load_seen_bvids() if remove_duplicates else set()
+            
+            for video in all_videos:
+                if remove_duplicates and video['bvid'] in seen_bvids:
+                    continue  # Skip this video as it's a duplicate
+                
                 video_info = {
                     'bvid': video['bvid'],
                     'title': video['title'],
                     'desc': video['desc'],
                     'dynamic': video['dynamic'],
-                    'summary': fetch_bilibili_summary(video['bvid'],video['owner']['mid'],video['cid']) , # 调用摘要函数
+                    'summary': fetch_bilibili_summary(video['bvid'], video['owner']['mid'], video['cid']),
                     'tname': video['tname'],
                     'owner': video['owner']['name'],
-                    'hot_comment':fetch_bilibili_top_comment(video['aid']), # 调用评论函数
+                    'hot_comment': fetch_bilibili_top_comment(video['aid']),
                 }
+
+                # Calculate total character count in video_info
+                total_chars = sum(len(str(value)) for value in video_info.values())
+                if total_chars < char_threshold:
+                    continue  # Skip this video if total character count is below the threshold
+
                 simplified_data.append(video_info)
+                seen_bvids.add(video['bvid'])
+                
+                if len(simplified_data) >= item:
+                    break  # We have enough items
+
+            save_seen_bvids(seen_bvids)
             return simplified_data
     return []
 
+
+def load_seen_bvids():
+    file_path = os.path.join(os.path.dirname(__file__), 'seen_bvids.json')
+    try:
+        with open(file_path, 'r') as file:
+            data = json.load(file)
+        return set(bvid['id'] for bvid in data)  # 仅提取 BVID
+    except (FileNotFoundError, json.JSONDecodeError):
+        return set()
+
+
+def save_seen_bvids(bvids):
+    file_path = os.path.join(os.path.dirname(__file__), 'seen_bvids.json')
+    today = datetime.datetime.now().strftime("%Y-%m-%d")
+    try:
+        with open(file_path, 'r') as file:
+            existing_bvids = json.load(file)
+            existing_bvids = {bvid['id']: bvid['date'] for bvid in existing_bvids}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return dict()
+
+    # 更新现有的 BVIDs 或添加新的 BVIDs
+    for bvid in bvids:
+        if bvid not in existing_bvids:
+            existing_bvids[bvid] = today
+
+    # 准备要写入的数据
+    data = [{'id': bvid, 'date': existing_bvids[bvid]} for bvid in existing_bvids]
+
+    with open(file_path, 'w') as file:
+        json.dump(data, file)
+
+
+
+
 if __name__ == "__main__":
-    top_videos = fetch_top_videos()
+    top_videos = fetch_top_videos(3)
     for video in top_videos:
         print(video)

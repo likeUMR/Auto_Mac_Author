@@ -15,9 +15,9 @@ def clean_title(title):
     clean_title = re.findall(r'[\u4e00-\u9fa5A-Za-z]', title)
     return ''.join(clean_title[:5])  # 返回前五个字符
 
-def main(item=3,start=0):
+def main(item=3):
     print("开始生成项目内容。")
-    videos = fetch_top_videos(item,start)
+    videos = fetch_top_videos(item,True) #para2：是否去重
 
     for video in videos:
         # 提取和清理标题
@@ -39,8 +39,8 @@ def main(item=3,start=0):
                 f"UP主: {video['owner']}",
                 f"简介：{video['desc'] if len(video['desc']) >= 8 else ''}",
                 f"动态：{video['dynamic'] if len(video['dynamic']) >= 8 else ''}",
-                f"内容：{video['summary'] if video['summary'] != 'No summary available' else ''}"
-                f"热评：{video['hot_comment']['username']}：{video['hot_comment']['message']}"
+                f"内容：{video['summary'] if video['summary'] != 'No summary available' else ''}",
+                f"热评：{video['hot_comment']['username']}：{video['hot_comment']['message']}",
             ]
             file.write("\n".join(content_lines))
 
@@ -74,4 +74,4 @@ def main(item=3,start=0):
         print("视频上传完成。")
 
 if __name__ == "__main__":
-    main(3,1) #para1：总生成视频数 para2：起始视频序号（0表示从热榜第一开始，n表示从热榜n+1开始）
+    main(1) #para1：总生成视频数

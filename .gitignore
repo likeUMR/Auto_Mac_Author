@@ -8,3 +8,4 @@ test_function/
 __pycache__/
 nohup.out
 mac_author.mp4
+seen_bvids.json
