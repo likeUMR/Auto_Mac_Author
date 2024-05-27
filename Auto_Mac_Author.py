@@ -5,6 +5,10 @@ from generate_transcript import generate_transcript
 from generate_audio import generate_audio
 from generate_video import generate_video
 from get_hot_board import fetch_top_videos
+from generate_video_info import generate_video_info
+import sys
+sys.path.append('/home/umr/social-auto-upload/examples/')
+from upload_video_to_douyin import upload_videos
 
 def clean_title(title):
     # 使用正则表达式提取汉字和英文字符
@@ -13,7 +17,7 @@ def clean_title(title):
 
 def main(item=3,start=0):
     print("开始生成项目内容。")
-    videos = fetch_top_videos(3)
+    videos = fetch_top_videos(item,start)
 
     for video in videos:
         # 提取和清理标题
@@ -59,7 +63,15 @@ def main(item=3,start=0):
         print(f"正在为项目 {project_name} 生成视频...")
         generate_video(project_dir)
 
+        # 生成视频信息
+        print(f"正在为项目 {project_name} 生成视频信息...")
+        generate_video_info(project_name)
+
+
         print(f"项目 {project_name} 的所有生成工作已完成。")
+        print("开始上传视频到抖音...")
+        upload_videos(project_dir)
+        print("视频上传完成。")
 
 if __name__ == "__main__":
-    main(2,1)
+    main(3,1) #para1：总生成视频数 para2：起始视频序号（0表示从热榜第一开始，n表示从热榜n+1开始）

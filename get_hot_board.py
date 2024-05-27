@@ -101,6 +101,11 @@ def fetch_bilibili_top_comment(oid):
     # 发送 GET 请求
     response = requests.get(url, headers=headers, params=params)
 
+    top_comment = {
+        "username": "",
+        "message": ""
+    }
+
     # 检查响应状态码
     if response.status_code == 200:
         try:
@@ -114,11 +119,14 @@ def fetch_bilibili_top_comment(oid):
             }
             return top_comment
         except KeyError as e:
-            return {"error": f"Key error: {e}"}
+            print("Key error:", e)
+            return top_comment
         except ValueError as e:
-            return {"error": f"Value error: {e}"}
+            print("Value error:", e)
+            return top_comment
         except TypeError as e:
-            return {"error": f"Type error: {e}"}
+            print("Type error:", e)
+            return top_comment
     else:
         return {"error": f"Failed to retrieve data: HTTP status {response.status_code}"}
 

@@ -71,7 +71,7 @@ def load_and_combine_audio(voice_dir, transcript_dir):
     combined_voice = AudioSegment.empty()
     subtitles = []
     total_length = 0  # Track total length of all audio for subtitles timing
-    print(voice_files)
+    # print(voice_files)
     for vf in voice_files:
         voice_path = os.path.join(voice_dir, vf)
         file_id = vf.split('_')[-1].split('.')[0]
@@ -79,7 +79,7 @@ def load_and_combine_audio(voice_dir, transcript_dir):
         voice = AudioSegment.from_file(voice_path, format='mp3')
         with open(transcript_path, 'r', encoding='utf-8') as file:
             transcript_text = file.read().strip()
-        print(f"Loaded voice file: {vf} with transcript: {transcript_text}")
+        # print(f"Loaded voice file: {vf} with transcript: {transcript_text}")
         combined_voice += voice
         start_time = total_length
         end_time = total_length + len(voice)
@@ -94,6 +94,40 @@ def generate_srt_file(subtitles, srt_path):
             srt_file.write(f"{idx}\n")
             srt_file.write(f"{format_time(start)} --> {format_time(end)}\n")
             srt_file.write(f"{text}\n\n")
+
+def generate_ass_file(subtitles, ass_path):
+    header = (
+        "[Script Info]\n"
+        "Title: Example ASS Subtitles\n"
+        "ScriptType: v4.00+\n"
+        "WrapStyle: 3\n"  # 启用智能换行
+        "ScaledBorderAndShadow: yes\n"
+        "YCbCr Matrix: TV.709\n"
+        "\n"
+        "[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+        "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+        "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+        "Style: Default,Microsoft YaHei,24,&H00FFFFFF,&HF0000000,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,1,0,"
+        "2,20,20,10,1\n"  # 调整字体大小和边距
+        "\n"
+        "[Events]\n"
+        "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+    )
+    with open(ass_path, 'w', encoding='utf-8') as ass_file:
+        ass_file.write(header)
+        for idx, (start, end, text) in enumerate(subtitles, 1):
+            start_time = format_time_ass(start)
+            end_time = format_time_ass(end)
+            ass_file.write(f"Dialogue: 0,{start_time},{end_time},Default,,0000,0000,0000,,{text}\n")
+
+def format_time_ass(milliseconds):
+    """Convert milliseconds to ASS time format (H:MM:SS.CC)"""
+    hours, milliseconds = divmod(milliseconds, 3600000)
+    minutes, milliseconds = divmod(milliseconds, 60000)
+    seconds, milliseconds = divmod(milliseconds, 1000)
+    centiseconds = int(milliseconds // 10)
+    return f"{int(hours):01}:{int(minutes):02}:{int(seconds):02}.{int(centiseconds):02}"
 
 def combine_audio(background_music_path, combined_voice, bgm_volume_change):
     background_music = AudioSegment.from_file(background_music_path, format='m4a')
@@ -136,12 +170,14 @@ def generate_video(project_name='test', bgm_volume_change=-12):
     transcript_dir = os.path.join(project_dir, 'transcript')
     video_dir = os.path.join(script_dir, 'Resource_Video_Clips')
     background_music_path = os.path.join(script_dir, 'temple.m4a')
-    print(f"Directories setup complete for project: {project_name}")
+    # print(f"Directories setup complete for project: {project_name}")
 
     combined_voice, subtitles = load_and_combine_audio(voice_dir, transcript_dir)
-    srt_path = os.path.join(project_dir, 'subtitles.srt')
-    generate_srt_file(subtitles, srt_path)
-    print(f"Audio and subtitles loaded and combined for project: {project_name}")
+    # srt_path = os.path.join(project_dir, 'subtitles.srt')
+    # generate_srt_file(subtitles, srt_path)
+    ass_path = os.path.join(project_dir, 'subtitles.ass')
+    generate_ass_file(subtitles, ass_path)
+    # print(f"Audio and subtitles loaded and combined for project: {project_name}")
 
     combined_audio = combine_audio(background_music_path, combined_voice, bgm_volume_change)
     temp_audio_path = os.path.join(script_dir, 'temp_combined_audio.mp3')
@@ -156,7 +192,7 @@ def generate_video(project_name='test', bgm_volume_change=-12):
     merged_video_path = os.path.join(script_dir, 'merged_video.mp4')
     temp_output_video_path = os.path.join(script_dir, 'final_video.mp4')
     merge_video_and_audio(temp_video_path, temp_audio_path, merged_video_path)
-    add_subtitles(merged_video_path, srt_path, temp_output_video_path)
+    add_subtitles(merged_video_path, ass_path, temp_output_video_path)
 
     # 将临时文件移动到最终的包含中文的目录
     output_path = os.path.join(project_dir, f'final_video.mp4')
@@ -165,7 +201,7 @@ def generate_video(project_name='test', bgm_volume_change=-12):
     # Cleanup
     os.remove(temp_video_path)
     os.remove(temp_audio_path)
-    os.remove(srt_path)
+    # os.remove(ass_path)
     os.remove(merged_video_path)
 
 
