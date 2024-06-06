@@ -128,10 +128,10 @@ def generate_audio(project_name):
                 download_file(download_url, voice_dir, id=id_number)
             else:
                 print(f"语音生成失败：{response_data['msg']}")
-                if response_data['msg'] == 'Invalid session or cookies':
-                    os.remove(os.path.join(script_dir, 'cookies.json'))  # Remove old cookies file
-                    print("Trying to re-login and fetch new cookies...")
-                    generate_audio(project_name)  # Retry with new login
+                # if response_data['msg'] == 'Invalid session or cookies':
+                os.remove(os.path.join(script_dir, 'cookies.json'))  # Remove old cookies file
+                print("Trying to re-login and fetch new cookies...")
+                generate_audio(project_name)  # Retry with new login
         else:
             print("请求失败，状态码：", response.status_code)
 

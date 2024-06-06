@@ -74,4 +74,4 @@ def main(item=3):
         print("视频上传完成。")
 
 if __name__ == "__main__":
-    main(1) #para1：总生成视频数
+    main(3) #para1：总生成视频数
